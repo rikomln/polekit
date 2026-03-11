@@ -1,0 +1,1854 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PoleKit</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      :root {
+        --bg: #0a0e17;
+        --surface: #111827;
+        --surface2: #1a2333;
+        --border: #1e3a5f;
+        --accent: #00d4ff;
+        --accent2: #ff6b35;
+        --accent3: #39ff14;
+        --text: #e2e8f0;
+        --text-dim: #64748b;
+        --dead-end: #ff6b35;
+        --suspension: #00d4ff;
+        --helical: #a78bfa;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .app-container {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-height: 100vh;
+      }
+
+      /* HEADER */
+      header {
+        background: linear-gradient(
+          90deg,
+          #0a0e17 0%,
+          #0f1e35 50%,
+          #0a0e17 100%
+        );
+        border-bottom: 1px solid var(--border);
+        padding: 16px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--accent), #0066ff);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        font-size: 14px;
+        color: #000;
+      }
+
+      .logo-text {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+
+      .logo-text span {
+        color: var(--accent);
+      }
+
+      .header-badge {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--accent3);
+        background: rgba(57, 255, 20, 0.08);
+        border: 1px solid rgba(57, 255, 20, 0.2);
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: 1px;
+      }
+
+      /* MAIN LAYOUT */
+      main {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 0;
+        height: calc(100vh - 69px);
+        overflow: hidden;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      .section-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* UPLOAD ZONE */
+      .upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        background: rgba(0, 212, 255, 0.02);
+      }
+
+      .upload-zone:hover,
+      .upload-zone.dragover {
+        border-color: var(--accent);
+        background: rgba(0, 212, 255, 0.06);
+      }
+
+      .upload-zone input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+      }
+
+      .upload-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      .upload-title {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .upload-sub {
+        font-size: 12px;
+        color: var(--text-dim);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .file-loaded {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(57, 255, 20, 0.06);
+        border: 1px solid rgba(57, 255, 20, 0.2);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+
+      .file-loaded .dot {
+        color: var(--accent3);
+        font-size: 18px;
+      }
+
+      /* CONFIG CARD */
+      .config-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+      }
+
+      .field-input {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+
+      .field-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .threshold-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: end;
+      }
+
+      .threshold-display {
+        background: rgba(0, 212, 255, 0.08);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+        text-align: center;
+        min-width: 64px;
+      }
+
+      /* ACCESSORIES CONFIG */
+      .acc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .acc-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        align-items: center;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 12px;
+        transition: border-color 0.2s;
+      }
+
+      .acc-item:hover {
+        border-color: var(--border);
+      }
+
+      .acc-toggle {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      .acc-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .acc-qty-input {
+        width: 44px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 6px;
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .acc-qty-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .acc-type-badge {
+        font-size: 10px;
+        font-family: "JetBrains Mono", monospace;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 6px;
+      }
+
+      .badge-de {
+        background: rgba(255, 107, 53, 0.15);
+        color: var(--dead-end);
+      }
+      .badge-sus {
+        background: rgba(0, 212, 255, 0.12);
+        color: var(--suspension);
+      }
+      .badge-hel {
+        background: rgba(167, 139, 250, 0.12);
+        color: var(--helical);
+      }
+
+      /* CALCULATE BUTTON */
+      .btn-calc {
+        background: linear-gradient(135deg, var(--accent), #0066ff);
+        border: none;
+        border-radius: 10px;
+        padding: 20px;
+        color: #000;
+        font-family: "Poppins", sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        width: 100%;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .btn-calc:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+      }
+      .btn-calc:active {
+        transform: translateY(0);
+      }
+      .btn-calc:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* RIGHT PANEL */
+      .right-panel {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        overflow: hidden;
+      }
+
+      /* TABS */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        padding: 0 24px;
+      }
+
+      .tab {
+        padding: 16px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-dim);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        letter-spacing: 0.3px;
+      }
+
+      .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .tab:hover:not(.active) {
+        color: var(--text);
+      }
+
+      /* TAB CONTENT */
+      .tab-content {
+        overflow: hidden;
+        position: relative;
+      }
+      .tab-pane {
+        display: none;
+        height: 100%;
+        overflow: auto;
+      }
+      .tab-pane.active {
+        display: block;
+      }
+
+      /* MAP */
+      #map {
+        height: 100%;
+        min-height: 400px;
+        background: var(--bg);
+      }
+
+      /* TABLE PANE */
+      .table-pane {
+        padding: 24px;
+        overflow: auto;
+      }
+
+      .table-pane::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .table-pane::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .table-pane::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      /* STATS ROW */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+      }
+
+      .stat-card.total::before {
+        background: var(--accent);
+      }
+      .stat-card.dead-end::before {
+        background: var(--dead-end);
+      }
+      .stat-card.suspension::before {
+        background: var(--suspension);
+      }
+      .stat-card.helical::before {
+        background: var(--helical);
+      }
+
+      .stat-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      .stat-card.total .stat-value {
+        color: var(--accent);
+      }
+      .stat-card.dead-end .stat-value {
+        color: var(--dead-end);
+      }
+      .stat-card.suspension .stat-value {
+        color: var(--suspension);
+      }
+      .stat-card.helical .stat-value {
+        color: var(--helical);
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: var(--text-dim);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      /* DATA TABLE */
+      .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+      }
+
+      .data-table thead th {
+        background: var(--surface2);
+        padding: 10px 14px;
+        text-align: left;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+      }
+
+      .data-table thead th:first-child {
+        border-radius: 8px 0 0 0;
+      }
+      .data-table thead th:last-child {
+        border-radius: 0 8px 0 0;
+      }
+
+      .data-table tbody tr {
+        transition: background 0.15s;
+        border-bottom: 1px solid rgba(30, 58, 95, 0.4);
+      }
+
+      .data-table tbody tr:hover {
+        background: rgba(0, 212, 255, 0.04);
+      }
+
+      .data-table tbody td {
+        padding: 10px 14px;
+        color: var(--text);
+        border-bottom: 1px solid rgba(30, 58, 95, 0.3);
+        white-space: nowrap;
+      }
+
+      .no-cell {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--text-dim);
+        font-size: 12px;
+      }
+
+      .type-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 0.5px;
+      }
+
+      .type-chip.dead-end {
+        background: rgba(255, 107, 53, 0.12);
+        color: var(--dead-end);
+        border: 1px solid rgba(255, 107, 53, 0.25);
+      }
+
+      .type-chip.suspension {
+        background: rgba(0, 212, 255, 0.1);
+        color: var(--suspension);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+      }
+
+      .qty-cell {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .qty-zero {
+        color: var(--text-dim);
+      }
+
+      .angle-cell {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      .angle-high {
+        color: var(--dead-end);
+        font-weight: 700;
+      }
+
+      /* FOOTER */
+      .panel-footer {
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .footer-info {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      .btn-export {
+        background: transparent;
+        border: 1px solid var(--accent3);
+        border-radius: 8px;
+        padding: 8px 18px;
+        color: var(--accent3);
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-export:hover {
+        background: rgba(57, 255, 20, 0.08);
+        box-shadow: 0 0 16px rgba(57, 255, 20, 0.15);
+      }
+
+      .btn-export:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* EMPTY STATE */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 16px;
+        color: var(--text-dim);
+        padding: 48px;
+      }
+
+      .empty-icon {
+        font-size: 48px;
+        opacity: 0.3;
+      }
+
+      .empty-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dim);
+      }
+
+      .empty-sub {
+        font-size: 13px;
+        text-align: center;
+        line-height: 1.6;
+        max-width: 300px;
+      }
+
+      /* PROJECT NAME */
+      .project-badge {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--accent);
+        background: rgba(0, 212, 255, 0.08);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 6px;
+        padding: 4px 10px;
+      }
+
+      /* RANGE SLIDER */
+      input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        outline: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+      }
+
+      /* TOOLTIP */
+      .tooltip {
+        position: absolute;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+        pointer-events: none;
+        z-index: 1000;
+        white-space: nowrap;
+      }
+
+      /* Leaflet custom markers */
+      .marker-te-sus {
+        width: 12px;
+        height: 12px;
+        background: var(--suspension);
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+      }
+
+      .marker-te-de {
+        width: 12px;
+        height: 12px;
+        background: var(--dead-end);
+        border-radius: 2px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 8px rgba(255, 107, 53, 0.6);
+      }
+
+      .marker-te-unknown {
+        width: 10px;
+        height: 10px;
+        background: var(--text-dim);
+        border-radius: 50%;
+        border: 1px solid #fff;
+      }
+
+      .add-acc-btn {
+        background: transparent;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text-dim);
+        font-family: "Poppins", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        width: 100%;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .add-acc-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: rgba(0, 212, 255, 0.04);
+      }
+
+      .remove-acc-btn {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: color 0.2s;
+      }
+
+      .remove-acc-btn:hover {
+        color: #ef4444;
+      }
+
+      select.field-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- HEADER -->
+      <header>
+        <div class="logo">
+          <div class="logo-icon">PK</div>
+          <div class="logo-text">Pole <span>Kit</span></div>
+        </div>
+        <div
+          id="projectBadge"
+          style="display: none"
+          class="project-badge"
+        ></div>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+          "
+        >
+          <div class="header-badge">v1.0 · FIBER TOOLS</div>
+          <div
+            style="
+              font-size: 10px;
+              color: var(--text);
+              font-family: &quot;JetBrains Mono&quot;, monospace;
+              letter-spacing: 0.5px;
+            "
+          >
+            Developed by Riko Maulana
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN -->
+      <main>
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <!-- UPLOAD -->
+          <div>
+            <div class="section-label">KML File</div>
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" id="fileInput" accept=".kml" />
+              <div class="upload-icon">📡</div>
+              <div class="upload-title">Drop KML File Here</div>
+              <div class="upload-sub">.kml · Google Earth / Maps</div>
+            </div>
+            <div id="fileInfo" style="display: none; margin-top: 10px"></div>
+          </div>
+
+          <!-- PROJECT CONFIG -->
+          <div>
+            <div class="section-label">Project Config</div>
+            <div class="config-card">
+              <div class="field-group">
+                <div class="field-label">NAMA PROJECT</div>
+                <input
+                  type="text"
+                  class="field-input"
+                  id="projectName"
+                  placeholder="e.g. PSN - Karawang 2025"
+                />
+              </div>
+              <div class="field-group">
+                <div class="field-label">ISP / CLIENT</div>
+                <input
+                  type="text"
+                  class="field-input"
+                  id="ispName"
+                  placeholder="e.g. Indihome, MyRepublic..."
+                />
+              </div>
+              <div class="field-group">
+                <div class="field-label">THRESHOLD SUDUT DEAD END</div>
+                <div class="threshold-row">
+                  <input
+                    type="range"
+                    id="thresholdSlider"
+                    min="5"
+                    max="60"
+                    value="30"
+                    oninput="
+                      document.getElementById('thresholdVal').textContent =
+                        this.value + '°'
+                    "
+                  />
+                  <div class="threshold-display" id="thresholdVal">30°</div>
+                </div>
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    font-family: &quot;JetBrains Mono&quot;, monospace;
+                    margin-top: 4px;
+                  "
+                >
+                  Sudut belok > threshold → Dead End Clamp
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACCESSORIES -->
+          <div>
+            <div class="section-label">Konfigurasi Aksesori</div>
+            <div class="config-card">
+              <div class="acc-list" id="accList"></div>
+              <button class="add-acc-btn" onclick="addAccessory()">
+                + Tambah Aksesori
+              </button>
+            </div>
+          </div>
+
+          <!-- CALCULATE -->
+          <button class="btn-calc" id="calcBtn" onclick="calculate()" disabled>
+            ⚡ Hitung Aksesori
+          </button>
+        </aside>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+          <!-- TABS -->
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('table', this)">
+              📋 Tabel Per Tiang
+            </div>
+            <div class="tab" onclick="switchTab('map', this)">
+              🗺️ Visualisasi Peta
+            </div>
+            <div class="tab" onclick="switchTab('summary', this)">
+              📊 Rekap Total
+            </div>
+          </div>
+
+          <!-- TAB CONTENT -->
+          <div class="tab-content">
+            <!-- TABLE TAB -->
+            <div class="tab-pane active" id="pane-table">
+              <div id="tableContent" style="height: 100%">
+                <div class="empty-state">
+                  <div class="empty-icon">📂</div>
+                  <div class="empty-title">Belum ada data</div>
+                  <div class="empty-sub">
+                    Upload file KML dan klik "Hitung Aksesori" untuk melihat
+                    hasil per tiang
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MAP TAB -->
+            <div class="tab-pane" id="pane-map">
+              <div id="map"></div>
+            </div>
+
+            <!-- SUMMARY TAB -->
+            <div class="tab-pane" id="pane-summary">
+              <div id="summaryContent" style="height: 100%">
+                <div class="empty-state">
+                  <div class="empty-icon">📊</div>
+                  <div class="empty-title">Belum ada rekap</div>
+                  <div class="empty-sub">
+                    Hitung dulu untuk melihat total kebutuhan aksesori
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FOOTER -->
+          <div class="panel-footer">
+            <div class="footer-info" id="footerInfo">
+              — Belum ada kalkulasi —
+            </div>
+            <button
+              class="btn-export"
+              id="exportBtn"
+              onclick="exportExcel()"
+              disabled
+            >
+              ⬇ Export Excel
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // ============================================================
+      // STATE
+      // ============================================================
+      let kmlData = null;
+      let calcResults = null;
+      let mapInstance = null;
+      let mapLayers = [];
+
+      // Default accessories
+      let accessories = [
+        {
+          id: 1,
+          name: "Suspension Clamp",
+          enabled: true,
+          qty: 1,
+          applyTo: "suspension",
+          color: "sus",
+        },
+        {
+          id: 2,
+          name: "Dead End Clamp",
+          enabled: true,
+          qty: 2,
+          applyTo: "dead_end",
+          color: "de",
+        },
+        {
+          id: 3,
+          name: "Helical PLP",
+          enabled: false,
+          qty: 2,
+          applyTo: "dead_end",
+          color: "hel",
+        },
+      ];
+
+      let accIdCounter = 4;
+
+      // ============================================================
+      // RENDER ACCESSORIES LIST
+      // ============================================================
+      function renderAccList() {
+        const list = document.getElementById("accList");
+        list.innerHTML = "";
+        accessories.forEach((acc) => {
+          const item = document.createElement("div");
+          item.className = "acc-item";
+          item.innerHTML = `
+      <input type="checkbox" class="acc-toggle" ${acc.enabled ? "checked" : ""}
+        onchange="toggleAcc(${acc.id}, this.checked)">
+      <div>
+        <div class="acc-name" style="opacity:${acc.enabled ? 1 : 0.4}">
+          ${acc.name}
+          <span class="acc-type-badge badge-${acc.color}">${acc.applyTo === "suspension" ? "SUS" : acc.applyTo === "dead_end" ? "DE" : "DE"}</span>
+        </div>
+        <select class="field-input" style="margin-top:4px;padding:4px 8px;font-size:11px;${acc.enabled ? "" : "opacity:0.4"}"
+          onchange="changeAccApply(${acc.id}, this.value)">
+          <option value="suspension" ${acc.applyTo === "suspension" ? "selected" : ""}>Tiang Suspension</option>
+          <option value="dead_end" ${acc.applyTo === "dead_end" ? "selected" : ""}>Tiang Dead End</option>
+          <option value="both">Semua Tiang</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:10px;color:var(--text-dim)">QTY</div>
+        <input type="number" class="acc-qty-input" value="${acc.qty}" min="1" max="99"
+          onchange="changeAccQty(${acc.id}, this.value)" ${acc.enabled ? "" : "disabled"}>
+        <button class="remove-acc-btn" onclick="removeAcc(${acc.id})" title="Hapus">✕</button>
+      </div>
+    `;
+          list.appendChild(item);
+        });
+      }
+
+      function toggleAcc(id, val) {
+        accessories = accessories.map((a) =>
+          a.id === id ? { ...a, enabled: val } : a,
+        );
+        renderAccList();
+      }
+
+      function changeAccQty(id, val) {
+        accessories = accessories.map((a) =>
+          a.id === id ? { ...a, qty: parseInt(val) || 1 } : a,
+        );
+      }
+
+      function changeAccApply(id, val) {
+        const colorMap = { suspension: "sus", dead_end: "de", both: "hel" };
+        accessories = accessories.map((a) =>
+          a.id === id ? { ...a, applyTo: val, color: colorMap[val] } : a,
+        );
+        renderAccList();
+      }
+
+      function removeAcc(id) {
+        accessories = accessories.filter((a) => a.id !== id);
+        renderAccList();
+      }
+
+      function addAccessory() {
+        accessories.push({
+          id: accIdCounter++,
+          name: "Aksesori Baru",
+          enabled: true,
+          qty: 1,
+          applyTo: "suspension",
+          color: "sus",
+        });
+        renderAccList();
+        // Focus on the new name - make it editable
+        const items = document.querySelectorAll(".acc-name");
+        const last = items[items.length - 1];
+        if (last) {
+          last.contentEditable = "true";
+          last.focus();
+          last.style.outline = "1px solid var(--accent)";
+          last.style.borderRadius = "4px";
+          last.style.padding = "2px 4px";
+          last.onblur = function () {
+            const idx = accessories.findIndex((a) => a.id === accIdCounter - 1);
+            // update name from DOM is complex, just keep it
+            this.contentEditable = "false";
+            this.style.outline = "";
+          };
+        }
+      }
+
+      // ============================================================
+      // FILE UPLOAD
+      // ============================================================
+      const uploadZone = document.getElementById("uploadZone");
+      const fileInput = document.getElementById("fileInput");
+
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadZone.classList.add("dragover");
+      });
+      uploadZone.addEventListener("dragleave", () =>
+        uploadZone.classList.remove("dragover"),
+      );
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove("dragover");
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith(".kml")) loadKML(file);
+      });
+
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) loadKML(file);
+      });
+
+      function loadKML(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target.result;
+          const parser = new DOMParser();
+          const xml = parser.parseFromString(text, "text/xml");
+          kmlData = xml;
+
+          // Extract info
+          const poles = extractPoles(xml);
+          const cable = extractCable(xml);
+
+          const info = document.getElementById("fileInfo");
+          info.style.display = "block";
+          info.innerHTML = `
+      <div class="file-loaded">
+        <span class="dot">●</span>
+        <div>
+          <div style="font-weight:700;font-size:13px">${file.name}</div>
+          <div style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px">
+            ${poles.length} tiang TE · ${cable.length} titik kabel
+          </div>
+        </div>
+      </div>
+    `;
+
+          document.getElementById("calcBtn").disabled = false;
+        };
+        reader.readAsText(file);
+      }
+
+      // ============================================================
+      // KML PARSING
+      // ============================================================
+      const KML_NS = "http://www.opengis.net/kml/2.2";
+
+      function getKMLName(el) {
+        const n = el.getElementsByTagNameNS(KML_NS, "name")[0];
+        return n ? n.textContent.trim() : "";
+      }
+
+      function parseCoords(text) {
+        return text
+          .trim()
+          .split(/\s+/)
+          .map((c) => {
+            const p = c.split(",");
+            return { lon: parseFloat(p[0]), lat: parseFloat(p[1]) };
+          })
+          .filter((p) => !isNaN(p.lon) && !isNaN(p.lat));
+      }
+
+      function extractPoles(xml) {
+        const poles = [];
+        const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
+        for (let pm of placemarks) {
+          const name = getKMLName(pm);
+          if (name === "TE") {
+            const coordEl = pm.getElementsByTagNameNS(KML_NS, "coordinates")[0];
+            if (coordEl) {
+              const pts = parseCoords(coordEl.textContent);
+              if (pts.length > 0) poles.push(pts[0]);
+            }
+          }
+        }
+        return poles;
+      }
+
+      function extractCable(xml) {
+        const coords = [];
+        const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
+        for (let pm of placemarks) {
+          const name = getKMLName(pm);
+          if (name.includes("ADSS") || name.includes("AC-OF")) {
+            const lineEls = pm.getElementsByTagNameNS(KML_NS, "LineString");
+            for (let line of lineEls) {
+              const coordEl = line.getElementsByTagNameNS(
+                KML_NS,
+                "coordinates",
+              )[0];
+              if (coordEl) coords.push(...parseCoords(coordEl.textContent));
+            }
+          }
+        }
+        return coords;
+      }
+
+      // ============================================================
+      // GEOMETRY
+      // ============================================================
+      function dist(p1, p2) {
+        const dx = p1.lon - p2.lon,
+          dy = p1.lat - p2.lat;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function bearing(p1, p2) {
+        return (Math.atan2(p2.lon - p1.lon, p2.lat - p1.lat) * 180) / Math.PI;
+      }
+
+      function angleBetween(b1, b2) {
+        let diff = Math.abs(b1 - b2) % 360;
+        return diff > 180 ? 360 - diff : diff;
+      }
+
+      // ============================================================
+      // CALCULATE
+      // ============================================================
+      function calculate() {
+        if (!kmlData) return;
+
+        const threshold = parseInt(
+          document.getElementById("thresholdSlider").value,
+        );
+        const poles = extractPoles(kmlData);
+        const cable = extractCable(kmlData);
+
+        if (poles.length === 0) {
+          alert("Tidak ada tiang TE ditemukan di KML.");
+          return;
+        }
+        if (cable.length === 0) {
+          alert("Tidak ada jalur kabel ADSS ditemukan di KML.");
+          return;
+        }
+
+        const results = poles.map((pole, i) => {
+          // Find nearest cable point
+          let minD = Infinity,
+            nearestIdx = -1;
+          cable.forEach((cp, j) => {
+            const d = dist(pole, cp);
+            if (d < minD) {
+              minD = d;
+              nearestIdx = j;
+            }
+          });
+
+          const isEnd = nearestIdx === 0 || nearestIdx === cable.length - 1;
+          let angle = null;
+
+          if (!isEnd && nearestIdx > 0 && nearestIdx < cable.length - 1) {
+            const b1 = bearing(cable[nearestIdx - 1], cable[nearestIdx]);
+            const b2 = bearing(cable[nearestIdx], cable[nearestIdx + 1]);
+            angle = angleBetween(b1, b2);
+          }
+
+          let poleType, reason;
+          if (isEnd) {
+            poleType = "dead_end";
+            reason = "Ujung jalur";
+          } else if (angle !== null && angle > threshold) {
+            poleType = "dead_end";
+            reason = `Sudut ${angle.toFixed(1)}°`;
+          } else {
+            poleType = "suspension";
+            reason =
+              angle !== null ? `Sudut ${angle.toFixed(1)}°` : "Tengah jalur";
+          }
+
+          // Calculate accessories for this pole
+          const accDetail = {};
+          accessories
+            .filter((a) => a.enabled)
+            .forEach((a) => {
+              const applies =
+                a.applyTo === "both" ||
+                (a.applyTo === "dead_end" && poleType === "dead_end") ||
+                (a.applyTo === "suspension" && poleType === "suspension");
+              accDetail[a.name] = applies ? a.qty : 0;
+            });
+
+          return {
+            no: i + 1,
+            lon: pole.lon,
+            lat: pole.lat,
+            poleType,
+            reason,
+            angle,
+            snapDist: minD * 111000,
+            accDetail,
+          };
+        });
+
+        calcResults = results;
+
+        // Update project badge
+        const pname = document.getElementById("projectName").value;
+        if (pname) {
+          const badge = document.getElementById("projectBadge");
+          badge.textContent = pname;
+          badge.style.display = "block";
+        }
+
+        renderTable(results);
+        renderSummary(results);
+        renderMap(results, extractCable(kmlData));
+
+        // Footer
+        const deCount = results.filter((r) => r.poleType === "dead_end").length;
+        const susCount = results.filter(
+          (r) => r.poleType === "suspension",
+        ).length;
+        document.getElementById("footerInfo").textContent =
+          `${results.length} tiang total · ${deCount} Dead End · ${susCount} Suspension · threshold ${threshold}°`;
+        document.getElementById("exportBtn").disabled = false;
+      }
+
+      // ============================================================
+      // RENDER TABLE
+      // ============================================================
+      function renderTable(results) {
+        const activeAcc = accessories.filter((a) => a.enabled);
+        const container = document.getElementById("tableContent");
+
+        const statsHtml = buildStatsCards(results);
+
+        const headers = [
+          "No",
+          "Koordinat",
+          "Tipe Tiang",
+          "Keterangan",
+          ...activeAcc.map((a) => a.name),
+        ];
+        const headerHtml = headers.map((h) => `<th>${h}</th>`).join("");
+
+        const rowsHtml = results
+          .map((r) => {
+            const typeChip =
+              r.poleType === "dead_end"
+                ? `<span class="type-chip dead-end">● Dead End</span>`
+                : `<span class="type-chip suspension">● Suspension</span>`;
+
+            const angleClass =
+              r.angle !== null &&
+              r.angle >
+                parseInt(document.getElementById("thresholdSlider").value)
+                ? "angle-high"
+                : "angle-cell";
+
+            const accCells = activeAcc
+              .map((a) => {
+                const qty = r.accDetail[a.name] || 0;
+                return `<td class="qty-cell ${qty === 0 ? "qty-zero" : ""}">${qty > 0 ? qty : "—"}</td>`;
+              })
+              .join("");
+
+            return `<tr>
+      <td class="no-cell">${String(r.no).padStart(3, "0")}</td>
+      <td class="angle-cell">${r.lon.toFixed(6)}, ${r.lat.toFixed(6)}</td>
+      <td>${typeChip}</td>
+      <td class="${angleClass}">${r.reason}</td>
+      ${accCells}
+    </tr>`;
+          })
+          .join("");
+
+        container.innerHTML = `
+    <div class="table-pane fade-in">
+      ${statsHtml}
+      <table class="data-table">
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+      }
+
+      function buildStatsCards(results) {
+        const deCount = results.filter((r) => r.poleType === "dead_end").length;
+        const susCount = results.filter(
+          (r) => r.poleType === "suspension",
+        ).length;
+
+        // Total per accessory
+        const accTotals = {};
+        accessories
+          .filter((a) => a.enabled)
+          .forEach((a) => {
+            accTotals[a.name] = results.reduce(
+              (sum, r) => sum + (r.accDetail[a.name] || 0),
+              0,
+            );
+          });
+
+        const totalItems = Object.values(accTotals).reduce((s, v) => s + v, 0);
+
+        const accCards = Object.entries(accTotals)
+          .map(([name, qty]) => {
+            const acc = accessories.find((a) => a.name === name);
+            const cls =
+              acc?.color === "de"
+                ? "dead-end"
+                : acc?.color === "hel"
+                  ? "helical"
+                  : "suspension";
+            return `
+      <div class="stat-card ${cls}">
+        <div class="stat-value">${qty}</div>
+        <div class="stat-label">${name.toUpperCase()}</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'JetBrains Mono',monospace">pcs total</div>
+      </div>
+    `;
+          })
+          .join("");
+
+        return `
+    <div class="stats-row">
+      <div class="stat-card total">
+        <div class="stat-value">${results.length}</div>
+        <div class="stat-label">TOTAL TIANG TE</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px;font-family:'JetBrains Mono',monospace">${deCount} DE + ${susCount} Sus</div>
+      </div>
+      ${accCards}
+    </div>
+  `;
+      }
+
+      // ============================================================
+      // RENDER SUMMARY
+      // ============================================================
+      function renderSummary(results) {
+        const activeAcc = accessories.filter((a) => a.enabled);
+        const deCount = results.filter((r) => r.poleType === "dead_end").length;
+        const susCount = results.filter(
+          (r) => r.poleType === "suspension",
+        ).length;
+
+        const accRows = activeAcc
+          .map((a) => {
+            const total = results.reduce(
+              (sum, r) => sum + (r.accDetail[a.name] || 0),
+              0,
+            );
+            const tiangCount = results.filter(
+              (r) => (r.accDetail[a.name] || 0) > 0,
+            ).length;
+            return `
+      <tr>
+        <td style="padding:12px 14px;font-weight:600">${a.name}</td>
+        <td style="padding:12px 14px;color:var(--text-dim);font-family:'JetBrains Mono',monospace">${a.applyTo === "suspension" ? "Suspension" : a.applyTo === "dead_end" ? "Dead End" : "Semua"}</td>
+        <td style="padding:12px 14px;font-family:'JetBrains Mono',monospace">${a.qty} pcs/tiang</td>
+        <td style="padding:12px 14px;font-family:'JetBrains Mono',monospace;color:var(--text-dim)">${tiangCount} tiang</td>
+        <td style="padding:12px 14px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:var(--accent)">${total}</td>
+      </tr>
+    `;
+          })
+          .join("");
+
+        const totalAll = activeAcc.reduce(
+          (sum, a) =>
+            sum + results.reduce((s, r) => s + (r.accDetail[a.name] || 0), 0),
+          0,
+        );
+
+        const project = document.getElementById("projectName").value || "—";
+        const isp = document.getElementById("ispName").value || "—";
+        const threshold = document.getElementById("thresholdSlider").value;
+
+        document.getElementById("summaryContent").innerHTML = `
+    <div class="table-pane fade-in">
+      <div class="config-card" style="margin-bottom:20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          <div>
+            <div class="field-label">PROJECT</div>
+            <div style="font-weight:700;margin-top:4px">${project}</div>
+          </div>
+          <div>
+            <div class="field-label">ISP / CLIENT</div>
+            <div style="font-weight:700;margin-top:4px">${isp}</div>
+          </div>
+          <div>
+            <div class="field-label">THRESHOLD</div>
+            <div style="font-weight:700;margin-top:4px;color:var(--accent);font-family:'JetBrains Mono',monospace">${threshold}°</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="stat-card dead-end">
+          <div class="stat-value">${deCount}</div>
+          <div class="stat-label">TIANG DEAD END</div>
+        </div>
+        <div class="stat-card suspension">
+          <div class="stat-value">${susCount}</div>
+          <div class="stat-label">TIANG SUSPENSION</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-bottom:12px">Rekap Kebutuhan Aksesori</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nama Aksesori</th>
+              <th>Berlaku Untuk</th>
+              <th>Qty/Tiang</th>
+              <th>Jumlah Tiang</th>
+              <th>TOTAL QTY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accRows}
+            <tr style="background:rgba(0,212,255,0.06);border-top:2px solid var(--accent)">
+              <td colspan="4" style="padding:12px 14px;font-weight:800;letter-spacing:0.5px">GRAND TOTAL AKSESORI</td>
+              <td style="padding:12px 14px;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:22px;color:var(--accent)">${totalAll}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+      }
+
+      // ============================================================
+      // RENDER MAP
+      // ============================================================
+      function renderMap(results, cable) {
+        // Init map if needed
+        if (!mapInstance) {
+          mapInstance = L.map("map", { zoomControl: true });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap",
+            maxZoom: 19,
+          }).addTo(mapInstance);
+        }
+
+        // Clear old layers
+        mapLayers.forEach((l) => mapInstance.removeLayer(l));
+        mapLayers = [];
+
+        if (cable.length > 1) {
+          const line = L.polyline(
+            cable.map((c) => [c.lat, c.lon]),
+            {
+              color: "#00d4ff",
+              weight: 2.5,
+              opacity: 0.7,
+              dashArray: "6,3",
+            },
+          ).addTo(mapInstance);
+          mapLayers.push(line);
+        }
+
+        results.forEach((r) => {
+          const isDe = r.poleType === "dead_end";
+          const color = isDe ? "#ff6b35" : "#00d4ff";
+          const shape = isDe ? "square" : "circle";
+
+          const icon = L.divIcon({
+            className: "",
+            html: `<div style="
+        width:${isDe ? 10 : 9}px;height:${isDe ? 10 : 9}px;
+        background:${color};
+        border-radius:${isDe ? "2px" : "50%"};
+        border:2px solid rgba(255,255,255,0.8);
+        box-shadow:0 0 6px ${color}88;
+      "></div>`,
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+          });
+
+          const accLines = accessories
+            .filter((a) => a.enabled)
+            .map((a) => {
+              const qty = r.accDetail[a.name] || 0;
+              return qty > 0 ? `<b>${a.name}</b>: ${qty} pcs` : null;
+            })
+            .filter(Boolean)
+            .join("<br>");
+
+          const marker = L.marker([r.lat, r.lon], { icon })
+            .bindPopup(
+              `
+        <div style="font-family:'JetBrains Mono',sans-serif;min-width:180px">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px">
+            Tiang TE-${String(r.no).padStart(3, "0")}
+          </div>
+          <div style="color:${isDe ? "#ff6b35" : "#00d4ff"};font-weight:600;margin-bottom:6px">
+            ${isDe ? "■ Dead End Clamp" : "● Suspension Clamp"}
+          </div>
+          <div style="color:#888;font-size:11px;margin-bottom:6px">${r.reason}</div>
+          <hr style="border-color:#333;margin:6px 0">
+          <div style="font-size:12px">${accLines || "Tidak ada aksesori aktif"}</div>
+        </div>
+      `,
+            )
+            .addTo(mapInstance);
+          mapLayers.push(marker);
+        });
+
+        // Fit bounds
+        if (results.length > 0) {
+          const bounds = L.latLngBounds(results.map((r) => [r.lat, r.lon]));
+          mapInstance.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        // Legend
+        const existingLegend = document.querySelector(".map-legend");
+        if (existingLegend) existingLegend.remove();
+
+        const legend = L.control({ position: "bottomright" });
+        legend.onAdd = function () {
+          const div = L.DomUtil.create("div", "map-legend");
+          div.style.cssText = `
+      background:rgba(17,24,39,0.92);border:1px solid #1e3a5f;
+      border-radius:8px;padding:10px 14px;font-family:'JetBrains Mono',monospace;
+      font-size:11px;color:#e2e8f0;backdrop-filter:blur(8px);
+    `;
+          div.innerHTML = `
+      <div style="margin-bottom:6px;font-weight:700;color:#00d4ff">LEGENDA</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="width:10px;height:10px;background:#ff6b35;border-radius:2px;box-shadow:0 0 4px #ff6b3588;flex-shrink:0"></div>
+        Dead End Clamp
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="width:10px;height:10px;background:#00d4ff;border-radius:50%;box-shadow:0 0 4px #00d4ff88;flex-shrink:0"></div>
+        Suspension Clamp
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:16px;height:2px;background:#00d4ff;opacity:0.7;flex-shrink:0"></div>
+        Jalur Kabel ADSS
+      </div>
+    `;
+          return div;
+        };
+        legend.addTo(mapInstance);
+        setTimeout(() => mapInstance.invalidateSize(), 100);
+      }
+
+      // ============================================================
+      // EXPORT EXCEL
+      // ============================================================
+      function exportExcel() {
+        if (!calcResults) return;
+
+        const wb = XLSX.utils.book_new();
+        const activeAcc = accessories.filter((a) => a.enabled);
+        const threshold = document.getElementById("thresholdSlider").value;
+        const project =
+          document.getElementById("projectName").value || "Project";
+        const isp = document.getElementById("ispName").value || "";
+
+        // Sheet 1: Per Tiang
+        const headers = [
+          "No",
+          "Longitude",
+          "Latitude",
+          "Tipe Tiang",
+          "Keterangan",
+          ...activeAcc.map((a) => `${a.name} (pcs)`),
+        ];
+
+        const rows = calcResults.map((r) => [
+          r.no,
+          r.lon.toFixed(6),
+          r.lat.toFixed(6),
+          r.poleType === "dead_end" ? "Dead End" : "Suspension",
+          r.reason,
+          ...activeAcc.map((a) => r.accDetail[a.name] || 0),
+        ]);
+
+        const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        ws1["!cols"] = [
+          { wch: 6 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 14 },
+          { wch: 16 },
+          ...activeAcc.map(() => ({ wch: 18 })),
+        ];
+        XLSX.utils.book_append_sheet(wb, ws1, "Per Tiang");
+
+        // Sheet 2: Rekap
+        const deCount = calcResults.filter(
+          (r) => r.poleType === "dead_end",
+        ).length;
+        const susCount = calcResults.filter(
+          (r) => r.poleType === "suspension",
+        ).length;
+        const totalAll = activeAcc.reduce(
+          (sum, a) =>
+            sum +
+            calcResults.reduce((s, r) => s + (r.accDetail[a.name] || 0), 0),
+          0,
+        );
+
+        const rekapData = [
+          ["REKAP KEBUTUHAN AKSESORI"],
+          [],
+          ["Project", project],
+          ["ISP / Client", isp],
+          ["Threshold Sudut", `> ${threshold}°`],
+          ["Total Tiang TE", calcResults.length],
+          ["Tiang Dead End", deCount],
+          ["Tiang Suspension", susCount],
+          [],
+          [
+            "Aksesori",
+            "Berlaku Untuk",
+            "Qty/Tiang",
+            "Jumlah Tiang",
+            "Total Qty (pcs)",
+          ],
+          ...activeAcc.map((a) => {
+            const total = calcResults.reduce(
+              (sum, r) => sum + (r.accDetail[a.name] || 0),
+              0,
+            );
+            const tiangCount = calcResults.filter(
+              (r) => (r.accDetail[a.name] || 0) > 0,
+            ).length;
+            const applyLabel =
+              a.applyTo === "suspension"
+                ? "Suspension"
+                : a.applyTo === "dead_end"
+                  ? "Dead End"
+                  : "Semua";
+            return [a.name, applyLabel, a.qty, tiangCount, total];
+          }),
+          [],
+          ["GRAND TOTAL", "", "", "", totalAll],
+        ];
+
+        const ws2 = XLSX.utils.aoa_to_sheet(rekapData);
+        ws2["!cols"] = [
+          { wch: 24 },
+          { wch: 16 },
+          { wch: 12 },
+          { wch: 16 },
+          { wch: 16 },
+        ];
+        XLSX.utils.book_append_sheet(wb, ws2, "Rekap");
+
+        const filename = `${project.replace(/[^a-zA-Z0-9]/g, "-")}_aksesori_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, filename);
+      }
+
+      // ============================================================
+      // TABS
+      // ============================================================
+      function switchTab(name, el) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-pane")
+          .forEach((p) => p.classList.remove("active"));
+        el.classList.add("active");
+        document.getElementById("pane-" + name).classList.add("active");
+        if (name === "map" && mapInstance) {
+          setTimeout(() => mapInstance.invalidateSize(), 50);
+        }
+      }
+
+      // ============================================================
+      // INIT
+      // ============================================================
+      renderAccList();
+    </script>
+  </body>
+</html>
