@@ -8,9 +8,30 @@ let mapLayers = [];
 let accIdCounter = 4;
 
 let accessories = [
-  { id: 1, name: "Suspension Clamp", enabled: true,  qty: 1, applyTo: "suspension", color: "sus" },
-  { id: 2, name: "Dead End Clamp",   enabled: true,  qty: 2, applyTo: "dead_end",   color: "de"  },
-  { id: 3, name: "Helical PLP",      enabled: false, qty: 2, applyTo: "dead_end",   color: "hel" },
+  {
+    id: 1,
+    name: "Suspension Clamp",
+    enabled: false,
+    qty: 1,
+    applyTo: "suspension",
+    color: "sus",
+  },
+  {
+    id: 2,
+    name: "Dead End Clamp",
+    enabled: false,
+    qty: 2,
+    applyTo: "dead_end",
+    color: "de",
+  },
+  {
+    id: 3,
+    name: "Helical PLP",
+    enabled: false,
+    qty: 2,
+    applyTo: "dead_end",
+    color: "hel",
+  },
 ];
 
 // ============================================================
@@ -33,7 +54,7 @@ function renderAccList() {
         <select class="field-input" style="margin-top:4px;padding:4px 8px;font-size:11px;${acc.enabled ? "" : "opacity:0.4"}"
           onchange="changeAccApply(${acc.id}, this.value)">
           <option value="suspension" ${acc.applyTo === "suspension" ? "selected" : ""}>Tiang Suspension</option>
-          <option value="dead_end"   ${acc.applyTo === "dead_end"   ? "selected" : ""}>Tiang Dead End</option>
+          <option value="dead_end"   ${acc.applyTo === "dead_end" ? "selected" : ""}>Tiang Dead End</option>
           <option value="both">Semua Tiang</option>
         </select>
       </div>
@@ -49,17 +70,23 @@ function renderAccList() {
 }
 
 function toggleAcc(id, val) {
-  accessories = accessories.map((a) => a.id === id ? { ...a, enabled: val } : a);
+  accessories = accessories.map((a) =>
+    a.id === id ? { ...a, enabled: val } : a,
+  );
   renderAccList();
 }
 
 function changeAccQty(id, val) {
-  accessories = accessories.map((a) => a.id === id ? { ...a, qty: parseInt(val) || 1 } : a);
+  accessories = accessories.map((a) =>
+    a.id === id ? { ...a, qty: parseInt(val) || 1 } : a,
+  );
 }
 
 function changeAccApply(id, val) {
   const colorMap = { suspension: "sus", dead_end: "de", both: "hel" };
-  accessories = accessories.map((a) => a.id === id ? { ...a, applyTo: val, color: colorMap[val] } : a);
+  accessories = accessories.map((a) =>
+    a.id === id ? { ...a, applyTo: val, color: colorMap[val] } : a,
+  );
   renderAccList();
 }
 

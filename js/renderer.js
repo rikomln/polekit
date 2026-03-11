@@ -338,7 +338,7 @@ function renderMap(results, cable, fitView = false) {
       font-size:11px;color:#e2e8f0;backdrop-filter:blur(8px);
     `;
     div.innerHTML = `
-      <div style="margin-bottom:6px;font-weight:700;color:#00d4ff">LEGENDA</div>
+      <div style="margin-bottom:6px;font-weight:700;color:#00d4ff">LEGEND</div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
         <div style="width:10px;height:10px;background:#ff6b35;border-radius:2px;flex-shrink:0"></div>Dead End
       </div>
