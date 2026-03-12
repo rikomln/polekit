@@ -4,16 +4,34 @@
 function calculate() {
   if (!kmlData) return;
 
+  const poleKw = document.getElementById("poleKeyword").value.trim();
+  const cableKw = document.getElementById("cableKeyword").value.trim();
+
+  if (!poleKw) {
+    alert("Isi dulu NAMA TIANG DI KML/KMZ sebelum menghitung.");
+    document.getElementById("poleKeyword").focus();
+    return;
+  }
+  if (!cableKw) {
+    alert("Isi dulu NAMA KABEL DI KML/KMZ sebelum menghitung.");
+    document.getElementById("cableKeyword").focus();
+    return;
+  }
+
   const threshold = parseInt(document.getElementById("thresholdSlider").value);
   const poles = extractPoles(kmlData);
   const cable = extractCable(kmlData);
 
   if (poles.length === 0) {
-    alert("Tidak ada tiang TE ditemukan di KML.");
+    alert(
+      "Tidak ada tiang ditemukan. Cek keyword nama tiang di Project Config.",
+    );
     return;
   }
   if (cable.length === 0) {
-    alert("Tidak ada jalur kabel ADSS ditemukan di KML.");
+    alert(
+      "Tidak ada jalur kabel ditemukan. Cek keyword nama kabel di Project Config.",
+    );
     return;
   }
 

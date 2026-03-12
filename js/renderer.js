@@ -78,7 +78,6 @@ function overridePoleType(poleNo, newType) {
   if (idx === -1) return;
 
   const r = calcResults[idx];
-  const wasAuto = r.poleType;
   const isOverride = newType !== r.autoType;
 
   // Recalculate accessories for this pole

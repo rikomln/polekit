@@ -20,11 +20,11 @@ function parseCoords(text) {
 }
 
 function getPoleKeyword() {
-  return (document.getElementById("poleKeyword")?.value || "TE").trim();
+  return document.getElementById("poleKeyword").value.trim();
 }
 
 function getCableKeyword() {
-  return (document.getElementById("cableKeyword")?.value || "ADSS").trim();
+  return document.getElementById("cableKeyword").value.trim();
 }
 
 function extractPoles(xml, keyword) {

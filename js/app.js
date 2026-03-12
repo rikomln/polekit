@@ -64,8 +64,6 @@ async function processKMZ(buffer, filename) {
 function showFileInfo(filename) {
   const poles = extractPoles(kmlData);
   const cable = extractCable(kmlData);
-  const poleKw = document.getElementById("poleKeyword")?.value || "TE";
-  const cableKw = document.getElementById("cableKeyword")?.value || "ADSS";
 
   const info = document.getElementById("fileInfo");
   info.style.display = "block";
@@ -75,7 +73,7 @@ function showFileInfo(filename) {
       <div>
         <div style="font-weight:700;font-size:13px">${filename}</div>
         <div style="font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-top:2px">
-          ${poles.length} tiang TE · ${cable.length} titik kabel
+          ${poles.length} tiang · ${cable.length} titik kabel
         </div>
       </div>
     </div>
@@ -83,7 +81,6 @@ function showFileInfo(filename) {
 
   document.getElementById("calcBtn").disabled = false;
 
-  // Update upload zone to show filename
   const uploadTitle = uploadZone.querySelector(".upload-title");
   const uploadSub = uploadZone.querySelector(".upload-sub");
   if (uploadTitle) uploadTitle.textContent = filename;
