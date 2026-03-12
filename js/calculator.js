@@ -67,16 +67,7 @@ function calculate() {
       reason = angle !== null ? `Sudut ${angle.toFixed(1)}°` : "Tengah jalur";
     }
 
-    const accDetail = {};
-    accessories
-      .filter((a) => a.enabled)
-      .forEach((a) => {
-        const applies =
-          a.applyTo === "both" ||
-          (a.applyTo === "dead_end" && poleType === "dead_end") ||
-          (a.applyTo === "suspension" && poleType === "suspension");
-        accDetail[a.name] = applies ? a.qty : 0;
-      });
+    const accDetail = calcAccDetail(poleType);
 
     return {
       no: i + 1,

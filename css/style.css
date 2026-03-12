@@ -251,50 +251,36 @@ main {
   min-width: 64px;
 }
 
-.acc-list {
+.acc-simple-row {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.acc-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 10px 12px;
-  transition: border-color 0.2s;
+  padding: 12px 14px;
+  gap: 12px;
 }
 
-.acc-toggle {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.acc-name {
+.acc-simple-label {
   font-size: 13px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.acc-qty-input {
-  width: 44px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 4px 6px;
-  color: var(--text);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+.acc-simple-qty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.acc-simple-qty .field-input {
+  width: 70px;
   text-align: center;
-}
-
-.acc-qty-input:focus {
-  outline: none;
-  border-color: var(--accent);
 }
 
 .acc-type-badge {
@@ -348,45 +334,6 @@ main {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;
-}
-
-.add-acc-btn {
-  background: transparent;
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: var(--text-dim);
-  font-family: "Poppins", sans-serif;
-  font-size: 12px;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.add-acc-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(0, 212, 255, 0.04);
-}
-
-.remove-acc-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: color 0.2s;
-}
-
-.remove-acc-btn:hover {
-  color: #ef4444;
 }
 
 .right-panel {

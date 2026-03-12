@@ -27,8 +27,8 @@ function getCableKeyword() {
   return document.getElementById("cableKeyword").value.trim();
 }
 
-function extractPoles(xml, keyword) {
-  const kw = (keyword || getPoleKeyword()).toLowerCase();
+function extractPoles(xml) {
+  const kw = getPoleKeyword().toLowerCase();
   const poles = [];
   const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
   for (let pm of placemarks) {
@@ -44,8 +44,8 @@ function extractPoles(xml, keyword) {
   return poles;
 }
 
-function extractCable(xml, keyword) {
-  const kw = (keyword || getCableKeyword()).toLowerCase();
+function extractCable(xml) {
+  const kw = getCableKeyword().toLowerCase();
   const coords = [];
   const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
   for (let pm of placemarks) {

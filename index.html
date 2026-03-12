@@ -93,7 +93,7 @@
                     font-family: &quot;JetBrains Mono&quot;, monospace;
                   "
                 >
-                  Sesuaikan dengan nama placemark atau mengandung kata tersebut
+                  Sesuaikan dengan nama placemark
                 </div>
               </div>
               <div class="field-group">
@@ -112,7 +112,7 @@
                     font-family: &quot;JetBrains Mono&quot;, monospace;
                   "
                 >
-                  Sesuaikan dengan nama LineString atau mengandung kata tersebut
+                  Sesuaikan dengan nama LineString
                 </div>
               </div>
               <div class="field-group">
@@ -149,10 +149,40 @@
           <div>
             <div class="section-label">Konfigurasi Aksesori</div>
             <div class="config-card">
-              <div class="acc-list" id="accList"></div>
-              <button class="add-acc-btn" onclick="addAccessory()">
-                + Tambah Aksesori
-              </button>
+              <div class="acc-simple-row">
+                <div class="acc-simple-label">
+                  <span class="acc-type-badge badge-sus">SUS</span>
+                  Suspension Clamp
+                </div>
+                <div class="acc-simple-qty">
+                  <div class="field-label">QTY / TIANG</div>
+                  <input
+                    type="number"
+                    class="field-input"
+                    id="qtySuspension"
+                    value="1"
+                    min="1"
+                    max="99"
+                  />
+                </div>
+              </div>
+              <div class="acc-simple-row">
+                <div class="acc-simple-label">
+                  <span class="acc-type-badge badge-de">DE</span>
+                  Dead End Clamp
+                </div>
+                <div class="acc-simple-qty">
+                  <div class="field-label">QTY / TIANG</div>
+                  <input
+                    type="number"
+                    class="field-input"
+                    id="qtyDeadEnd"
+                    value="2"
+                    min="1"
+                    max="99"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

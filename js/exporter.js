@@ -5,10 +5,11 @@ function exportExcel() {
   if (!calcResults) return;
 
   const wb = XLSX.utils.book_new();
-  const activeAcc = accessories.filter((a) => a.enabled);
   const threshold = document.getElementById("thresholdSlider").value;
   const project = document.getElementById("projectName").value || "Project";
   const isp = document.getElementById("ispName").value || "";
+  const susQty = getSuspensionQty();
+  const deQty = getDeadEndQty();
 
   // Sheet 1: Per Tiang
   const headers = [
@@ -18,7 +19,8 @@ function exportExcel() {
     "Tipe Tiang",
     "Keterangan",
     "Override",
-    ...activeAcc.map((a) => `${a.name} (pcs)`),
+    "Suspension Clamp (pcs)",
+    "Dead End Clamp (pcs)",
   ];
 
   const rows = calcResults.map((r) => [
@@ -28,7 +30,8 @@ function exportExcel() {
     r.poleType === "dead_end" ? "Dead End" : "Suspension",
     r.reason,
     r.isOverride ? "Manual" : "Auto",
-    ...activeAcc.map((a) => r.accDetail[a.name] || 0),
+    r.accDetail["Suspension Clamp"] || 0,
+    r.accDetail["Dead End Clamp"] || 0,
   ]);
 
   const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -39,7 +42,8 @@ function exportExcel() {
     { wch: 14 },
     { wch: 16 },
     { wch: 10 },
-    ...activeAcc.map(() => ({ wch: 18 })),
+    { wch: 22 },
+    { wch: 20 },
   ];
   XLSX.utils.book_append_sheet(wb, ws1, "Per Tiang");
 
@@ -48,11 +52,15 @@ function exportExcel() {
   const susCount = calcResults.filter(
     (r) => r.poleType === "suspension",
   ).length;
-  const totalAll = activeAcc.reduce(
-    (sum, a) =>
-      sum + calcResults.reduce((s, r) => s + (r.accDetail[a.name] || 0), 0),
+  const susTotal = calcResults.reduce(
+    (sum, r) => sum + (r.accDetail["Suspension Clamp"] || 0),
     0,
   );
+  const deTotal = calcResults.reduce(
+    (sum, r) => sum + (r.accDetail["Dead End Clamp"] || 0),
+    0,
+  );
+  const grandTotal = susTotal + deTotal;
 
   const rekapData = [
     ["REKAP KEBUTUHAN AKSESORI"],
@@ -60,7 +68,7 @@ function exportExcel() {
     ["Project", project],
     ["ISP / Client", isp],
     ["Threshold Sudut", `> ${threshold}°`],
-    ["Total Tiang TE", calcResults.length],
+    ["Total Tiang", calcResults.length],
     ["Tiang Dead End", deCount],
     ["Tiang Suspension", susCount],
     [],
@@ -71,24 +79,10 @@ function exportExcel() {
       "Jumlah Tiang",
       "Total Qty (pcs)",
     ],
-    ...activeAcc.map((a) => {
-      const total = calcResults.reduce(
-        (sum, r) => sum + (r.accDetail[a.name] || 0),
-        0,
-      );
-      const tiangCount = calcResults.filter(
-        (r) => (r.accDetail[a.name] || 0) > 0,
-      ).length;
-      const applyLabel =
-        a.applyTo === "suspension"
-          ? "Suspension"
-          : a.applyTo === "dead_end"
-            ? "Dead End"
-            : "Semua";
-      return [a.name, applyLabel, a.qty, tiangCount, total];
-    }),
+    ["Suspension Clamp", "Suspension", susQty, susCount, susTotal],
+    ["Dead End Clamp", "Dead End", deQty, deCount, deTotal],
     [],
-    ["GRAND TOTAL", "", "", "", totalAll],
+    ["GRAND TOTAL", "", "", "", grandTotal],
   ];
 
   const ws2 = XLSX.utils.aoa_to_sheet(rekapData);

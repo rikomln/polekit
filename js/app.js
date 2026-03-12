@@ -88,14 +88,6 @@ function showFileInfo(filename) {
     uploadSub.textContent = `${poles.length} tiang · ${cable.length} titik kabel`;
 }
 
-// ============================================================
-// INIT
-// ============================================================
 document.addEventListener("DOMContentLoaded", () => {
-  renderAccList();
-
-  // Update file input to accept both kml and kmz
   fileInput.setAttribute("accept", ".kml,.kmz");
-  const uploadSub = uploadZone.querySelector(".upload-sub");
-  if (uploadSub) uploadSub.textContent = ".kml · .kmz · Google Earth / Maps";
 });
