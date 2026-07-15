@@ -264,7 +264,7 @@ function makeMarkerIcon(r) {
 // ============================================================
 // RENDER MAP
 // ============================================================
-function renderMap(results, cable, fitView = false) {
+function renderMap(results, cableSegments, fitView = false) {
   if (!mapInstance) {
     mapInstance = L.map("map", { zoomControl: true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -277,18 +277,20 @@ function renderMap(results, cable, fitView = false) {
   mapLayers = [];
   markerMap = {};
 
-  if (cable.length > 1) {
-    const line = L.polyline(
-      cable.map((c) => [c.lat, c.lon]),
-      {
-        color: "#00d4ff",
-        weight: 2.5,
-        opacity: 0.7,
-        dashArray: "6,3",
-      },
-    ).addTo(mapInstance);
-    mapLayers.push(line);
-  }
+  cableSegments.forEach((seg) => {
+    if (seg.length > 1) {
+      const line = L.polyline(
+        seg.map((c) => [c.lat, c.lon]),
+        {
+          color: "#00d4ff",
+          weight: 2.5,
+          opacity: 0.7,
+          dashArray: "6,3",
+        },
+      ).addTo(mapInstance);
+      mapLayers.push(line);
+    }
+  });
 
   results.forEach((r) => {
     const marker = L.marker([r.lat, r.lon], { icon: makeMarkerIcon(r) })

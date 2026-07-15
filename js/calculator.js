@@ -20,7 +20,7 @@ function calculate() {
 
   const threshold = parseInt(document.getElementById("thresholdSlider").value);
   const poles = extractPoles(kmlData);
-  const cable = extractCable(kmlData);
+  const cableSegments = extractCable(kmlData);
 
   if (poles.length === 0) {
     alert(
@@ -28,7 +28,7 @@ function calculate() {
     );
     return;
   }
-  if (cable.length === 0) {
+  if (countCablePoints(cableSegments) === 0) {
     alert(
       "Tidak ada jalur kabel ditemukan. Cek keyword nama kabel di Project Config.",
     );
@@ -37,21 +37,26 @@ function calculate() {
 
   const results = poles.map((pole, i) => {
     let minD = Infinity,
+      nearestSeg = -1,
       nearestIdx = -1;
-    cable.forEach((cp, j) => {
-      const d = dist(pole, cp);
-      if (d < minD) {
-        minD = d;
-        nearestIdx = j;
-      }
+    cableSegments.forEach((seg, sIdx) => {
+      seg.forEach((cp, j) => {
+        const d = dist(pole, cp);
+        if (d < minD) {
+          minD = d;
+          nearestSeg = sIdx;
+          nearestIdx = j;
+        }
+      });
     });
 
-    const isEnd = nearestIdx === 0 || nearestIdx === cable.length - 1;
+    const seg = cableSegments[nearestSeg];
+    const isEnd = nearestIdx === 0 || nearestIdx === seg.length - 1;
     let angle = null;
 
-    if (!isEnd && nearestIdx > 0 && nearestIdx < cable.length - 1) {
-      const b1 = bearing(cable[nearestIdx - 1], cable[nearestIdx]);
-      const b2 = bearing(cable[nearestIdx], cable[nearestIdx + 1]);
+    if (!isEnd) {
+      const b1 = bearing(seg[nearestIdx - 1], seg[nearestIdx]);
+      const b2 = bearing(seg[nearestIdx], seg[nearestIdx + 1]);
       angle = angleBetween(b1, b2);
     }
 
@@ -94,7 +99,7 @@ function calculate() {
 
   renderTable(results);
   renderSummary(results);
-  renderMap(results, extractCable(kmlData), true);
+  renderMap(results, cableSegments, true);
 
   const deCount = results.filter((r) => r.poleType === "dead_end").length;
   const susCount = results.filter((r) => r.poleType === "suspension").length;

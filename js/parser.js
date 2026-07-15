@@ -46,7 +46,7 @@ function extractPoles(xml) {
 
 function extractCable(xml) {
   const kw = getCableKeyword().toLowerCase();
-  const coords = [];
+  const segments = [];
   const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
   for (let pm of placemarks) {
     const name = getKMLName(pm).toLowerCase();
@@ -54,11 +54,18 @@ function extractCable(xml) {
       const lineEls = pm.getElementsByTagNameNS(KML_NS, "LineString");
       for (let line of lineEls) {
         const coordEl = line.getElementsByTagNameNS(KML_NS, "coordinates")[0];
-        if (coordEl) coords.push(...parseCoords(coordEl.textContent));
+        if (coordEl) {
+          const pts = parseCoords(coordEl.textContent);
+          if (pts.length > 0) segments.push(pts);
+        }
       }
     }
   }
-  return coords;
+  return segments;
+}
+
+function countCablePoints(segments) {
+  return segments.reduce((sum, s) => sum + s.length, 0);
 }
 
 function parseKMLText(text) {
