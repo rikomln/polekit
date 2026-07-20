@@ -6,6 +6,7 @@ let calcResults = null;
 let mapInstance = null;
 let mapLayers = [];
 let markerMap = {}; // poleNo → marker instance
+let lastRouteInfo = { chainCount: 0, segmentCount: 0 };
 
 // Fixed accessories — qty diambil langsung dari input HTML
 function getSuspensionQty() {

@@ -14,6 +14,8 @@ function exportExcel() {
   // Sheet 1: Per Tiang
   const headers = [
     "No",
+    "Grup Rute",
+    "Urutan dalam Rute",
     "Longitude",
     "Latitude",
     "Tipe Tiang",
@@ -25,6 +27,8 @@ function exportExcel() {
 
   const rows = calcResults.map((r) => [
     r.no,
+    r.chainNo,
+    r.orderInChain,
     r.lon.toFixed(6),
     r.lat.toFixed(6),
     r.poleType === "dead_end" ? "Dead End" : "Suspension",
@@ -37,6 +41,8 @@ function exportExcel() {
   const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   ws1["!cols"] = [
     { wch: 6 },
+    { wch: 10 },
+    { wch: 16 },
     { wch: 14 },
     { wch: 14 },
     { wch: 14 },

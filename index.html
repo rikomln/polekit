@@ -94,7 +94,7 @@
                     font-family: &quot;JetBrains Mono&quot;, monospace;
                   "
                 >
-                  Sesuaikan dengan nama placemark
+                  Bisa isi lebih dari 1, pisahkan dengan koma (mis. TB, TE)
                 </div>
               </div>
               <div class="field-group">
@@ -141,6 +141,46 @@
                   "
                 >
                   Sudut belok > threshold → Dead End
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-label">INTERVAL TIANG TARIK (DEAD END)</div>
+                <input
+                  type="number"
+                  class="field-input"
+                  id="deadEndInterval"
+                  value="5"
+                  min="2"
+                  max="20"
+                />
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    font-family: &quot;JetBrains Mono&quot;, monospace;
+                  "
+                >
+                  Otomatis Dead End tiap tiang ke-N di sepanjang rute (standar 1:4–1:5), meski sudutnya lurus. Tetap bisa direvisi manual di tabel/peta.
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-label">TOLERANSI SAMBUNG SEGMEN (METER)</div>
+                <input
+                  type="number"
+                  class="field-input"
+                  id="joinTolerance"
+                  value="15"
+                  min="0"
+                  max="500"
+                />
+                <div
+                  style="
+                    font-size: 11px;
+                    color: var(--text-dim);
+                    font-family: &quot;JetBrains Mono&quot;, monospace;
+                  "
+                >
+                  Kalau project punya banyak LineString terpisah, ujung-ujung yang jaraknya di bawah ini otomatis disambung jadi 1 rute. Kalau beda rute fisik (jauh), pola Dead End akan reset sendiri.
                 </div>
               </div>
             </div>

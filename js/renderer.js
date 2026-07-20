@@ -9,6 +9,7 @@ function renderTable(results) {
   const statsHtml = buildStatsCards(results);
   const headerHtml = [
     "No",
+    "Grup Rute",
     "Koordinat",
     "Tipe Tiang",
     "Keterangan",
@@ -51,6 +52,7 @@ function renderTable(results) {
 
       return `<tr id="row-${r.no}">
       <td class="no-cell">${String(r.no).padStart(3, "0")}</td>
+      <td class="no-cell">R${r.chainNo} · #${r.orderInChain}</td>
       <td class="angle-cell">${r.lon.toFixed(6)}, ${r.lat.toFixed(6)}</td>
       <td>${typeDropdown}</td>
       <td class="${angleClass}">${r.reason}${isOverride ? ' <span style="color:var(--accent3);font-size:10px">[manual]</span>' : ""}</td>
@@ -407,8 +409,11 @@ function updateFooter(results) {
   const threshold = document.getElementById("thresholdSlider").value;
   const overrideNote =
     overrideCount > 0 ? ` · ✎ ${overrideCount} manual override` : "";
+  const routeNote = lastRouteInfo.chainCount
+    ? ` · ${lastRouteInfo.chainCount} grup rute (${lastRouteInfo.segmentCount} segmen KML digabung)`
+    : "";
   document.getElementById("footerInfo").textContent =
-    `${results.length} tiang total · ${deCount} Dead End · ${susCount} Suspension · threshold ${threshold}°${overrideNote}`;
+    `${results.length} tiang total · ${deCount} Dead End · ${susCount} Suspension · threshold ${threshold}°${routeNote}${overrideNote}`;
 }
 
 function switchTab(name, el) {
