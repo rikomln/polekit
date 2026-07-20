@@ -9,6 +9,7 @@ function renderTable(results) {
   const statsHtml = buildStatsCards(results);
   const headerHtml = [
     "No",
+    "Nama Tiang (KML)",
     "Grup Rute",
     "Koordinat",
     "Tipe Tiang",
@@ -52,6 +53,7 @@ function renderTable(results) {
 
       return `<tr id="row-${r.no}">
       <td class="no-cell">${String(r.no).padStart(3, "0")}</td>
+      <td class="no-cell">${r.poleName || "—"}</td>
       <td class="no-cell">R${r.chainNo} · #${r.orderInChain}</td>
       <td class="angle-cell">${r.lon.toFixed(6)}, ${r.lat.toFixed(6)}</td>
       <td>${typeDropdown}</td>
@@ -235,7 +237,7 @@ function buildPopupContent(r) {
   return `
     <div style="font-family:'JetBrains Mono',sans-serif;min-width:200px;font-size:12px">
       <div style="font-weight:700;font-size:13px;margin-bottom:8px">
-        Tiang TE-${String(r.no).padStart(3, "0")}${overrideBadge}
+        ${r.poleName ? r.poleName : "Tiang #" + String(r.no).padStart(3, "0")}${overrideBadge}
       </div>
       <div style="margin-bottom:6px;font-size:11px;color:#888">${r.reason}</div>
       <div style="margin-bottom:8px">

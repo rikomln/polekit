@@ -14,6 +14,7 @@ function exportExcel() {
   // Sheet 1: Per Tiang
   const headers = [
     "No",
+    "Nama Tiang (KML)",
     "Grup Rute",
     "Urutan dalam Rute",
     "Longitude",
@@ -27,6 +28,7 @@ function exportExcel() {
 
   const rows = calcResults.map((r) => [
     r.no,
+    r.poleName || "",
     r.chainNo,
     r.orderInChain,
     r.lon.toFixed(6),
@@ -41,6 +43,7 @@ function exportExcel() {
   const ws1 = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   ws1["!cols"] = [
     { wch: 6 },
+    { wch: 18 },
     { wch: 10 },
     { wch: 16 },
     { wch: 14 },

@@ -88,7 +88,8 @@ function calculate() {
 
   // TAHAP 3: urutkan tiap tiang berdasarkan posisi fisiknya di chain-nya
   snapped.sort((a, b) => {
-    if (a.nearestChain !== b.nearestChain) return a.nearestChain - b.nearestChain;
+    if (a.nearestChain !== b.nearestChain)
+      return a.nearestChain - b.nearestChain;
     return a.nearestIdx - b.nearestIdx;
   });
 
@@ -114,7 +115,8 @@ function calculate() {
       reason = `Tiang tarik (pola 1:${interval})`;
     } else {
       poleType = "suspension";
-      reason = s.angle !== null ? `Sudut ${s.angle.toFixed(1)}°` : "Tengah jalur";
+      reason =
+        s.angle !== null ? `Sudut ${s.angle.toFixed(1)}°` : "Tengah jalur";
     }
 
     const accDetail = calcAccDetail(poleType);
@@ -123,6 +125,7 @@ function calculate() {
       no: idx + 1,
       chainNo,
       orderInChain,
+      poleName: s.pole.name || "",
       lon: s.pole.lon,
       lat: s.pole.lat,
       poleType,
@@ -150,7 +153,10 @@ function calculate() {
 
   const deCount = results.filter((r) => r.poleType === "dead_end").length;
   const susCount = results.filter((r) => r.poleType === "suspension").length;
-  lastRouteInfo = { chainCount: chains.length, segmentCount: cableSegments.length };
+  lastRouteInfo = {
+    chainCount: chains.length,
+    segmentCount: cableSegments.length,
+  };
   document.getElementById("footerInfo").textContent =
     `${results.length} tiang total · ${deCount} Dead End · ${susCount} Suspension · threshold ${threshold}° · ${chains.length} grup rute (${cableSegments.length} segmen KML digabung)`;
   document.getElementById("exportBtn").disabled = false;

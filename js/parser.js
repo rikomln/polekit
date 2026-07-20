@@ -40,12 +40,13 @@ function extractPoles(xml) {
   const poles = [];
   const placemarks = xml.getElementsByTagNameNS(KML_NS, "Placemark");
   for (let pm of placemarks) {
-    const name = getKMLName(pm).toLowerCase();
+    const rawName = getKMLName(pm);
+    const name = rawName.toLowerCase();
     if (keywords.some((kw) => name.includes(kw))) {
       const coordEl = pm.getElementsByTagNameNS(KML_NS, "coordinates")[0];
       if (coordEl) {
         const pts = parseCoords(coordEl.textContent);
-        if (pts.length > 0) poles.push(pts[0]);
+        if (pts.length > 0) poles.push({ ...pts[0], name: rawName });
       }
     }
   }
@@ -138,7 +139,11 @@ function buildRouteChains(segments, toleranceMeters) {
         const chainTail = chain[chain.length - 1];
 
         const candidates = [
-          { d: distMeters(chainTail, segStart), atHead: false, reversed: false },
+          {
+            d: distMeters(chainTail, segStart),
+            atHead: false,
+            reversed: false,
+          },
           { d: distMeters(chainTail, segEnd), atHead: false, reversed: true },
           { d: distMeters(chainHead, segEnd), atHead: true, reversed: false },
           { d: distMeters(chainHead, segStart), atHead: true, reversed: true },
